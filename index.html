@@ -58,7 +58,7 @@
     margin: 0;
     background: var(--bg);
     color: var(--ink);
-    font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
     font-size: 16px;
     line-height: 1.45;
     -webkit-tap-highlight-color: transparent;
@@ -104,6 +104,14 @@
     margin: 0;
   }
   .tagline { margin: 0; color: var(--muted); font-size: 18px; }
+  .lang-btn {
+    margin-left: auto;
+    align-self: center;
+    font: inherit; font-size: 14px; font-weight: 700;
+    color: var(--ink); background: var(--surface);
+    border: 1.5px solid var(--line-soft); border-radius: 999px;
+    padding: 6px 14px; cursor: pointer;
+  }
 
   .status {
     grid-area: status;
@@ -201,8 +209,9 @@
 <main class="app">
   <header>
     <h1>Sim</h1>
-    <p class="tagline">A graph theory game</p>
-    <p class="rule-main">Take turns clicking grey lines. The first player to complete a unicolor triangle <strong>loses</strong>.</p>
+    <p class="tagline" data-i18n="tagline">A graph theory game</p>
+    <button type="button" class="lang-btn" id="langBtn" lang="zh">中文</button>
+    <p class="rule-main" data-i18n-html="rule">Take turns clicking grey lines. The first player to complete a unicolor triangle <strong>loses</strong>.</p>
   </header>
 
   <div class="status" id="status" role="status" aria-live="polite">Red’s turn</div>
@@ -223,23 +232,23 @@
 
   <section class="rules">
     <div class="actions">
-      <button type="button" class="btn primary" id="newBtn">New game</button>
-      <button type="button" class="btn secondary" id="undoBtn">Undo</button>
+      <button type="button" class="btn primary" id="newBtn" data-i18n="newGame">New game</button>
+      <button type="button" class="btn secondary" id="undoBtn" data-i18n="undo">Undo</button>
     </div>
-    <p class="rule-sub">Use the buttons below to choose your opponent and who starts.</p>
+    <p class="rule-sub" data-i18n="sub">Use the buttons below to choose your opponent and who starts.</p>
   </section>
 
   <section class="controls">
     <div class="field">
-      <span class="field-name" id="oppLabel">Opponent</span>
+      <span class="field-name" id="oppLabel" data-i18n="opponent">Opponent</span>
       <div class="seg" role="group" aria-labelledby="oppLabel" id="modeSeg">
-        <button type="button" data-mode="EASY">Easy AI</button>
-        <button type="button" data-mode="HARD">Hard AI</button>
-        <button type="button" data-mode="2P">Friend</button>
+        <button type="button" data-mode="EASY" data-i18n="easy">Easy AI</button>
+        <button type="button" data-mode="HARD" data-i18n="hard">Hard AI</button>
+        <button type="button" data-mode="2P" data-i18n="friend">Friend</button>
       </div>
     </div>
     <div class="field">
-      <span class="field-name" id="firstLabel">Who starts</span>
+      <span class="field-name" id="firstLabel" data-i18n="starts">Who starts</span>
       <div class="seg" role="group" aria-labelledby="firstLabel" id="firstSeg">
         <button type="button" data-first="R">Red</button>
         <button type="button" data-first="B">Blue</button>
@@ -261,6 +270,46 @@
   var EDGES = [];
   for (var u = 0; u < 6; u++) for (var v = u + 1; v < 6; v++) EDGES.push([u, v]);
   function key(a, b) { return a < b ? a + "-" + b : b + "-" + a; }
+
+  var T = {
+    en: {
+      title: "Sim", tagline: "A graph theory game",
+      rule: "Take turns clicking grey lines. The first player to complete a unicolor triangle <strong>loses</strong>.",
+      sub: "Use the buttons below to choose your opponent and who starts.",
+      opponent: "Opponent", starts: "Who starts", easy: "Easy AI", hard: "Hard AI", friend: "Friend",
+      newGame: "New game", undo: "Undo", red: "Red", blue: "Blue", you: "You", ai: "AI",
+      turn: function (p) { return p + "’s turn"; },
+      yourTurn: "Your turn (Red)", thinking: "AI is thinking…",
+      twoLose: function (l, w) { return l + " made a triangle. " + w + " wins!"; },
+      youLose: "You made a triangle. The AI wins.", aiLose: "The AI made a triangle. You win!",
+      board: "Sim board: six dots joined by fifteen lines",
+      line: function (a, b) { return "Line from dot " + a + " to dot " + b; },
+      owned: function (p) { return ", " + p; }, latest: ", latest move",
+      switchTo: "中文", switchLang: "zh"
+    },
+    zh: {
+      title: "Sim 图论游戏", tagline: "图论游戏",
+      rule: "轮流点击灰色线段。最先连成同色三角形的一方<strong>输</strong>。",
+      sub: "用下面的按钮选择对手和先手。",
+      opponent: "对手", starts: "先手", easy: "简单 AI", hard: "困难 AI", friend: "朋友",
+      newGame: "新游戏", undo: "悔棋", red: "红方", blue: "蓝方", you: "你", ai: "AI",
+      turn: function (p) { return "轮到" + p; },
+      yourTurn: "轮到你（红方）", thinking: "AI 正在思考…",
+      twoLose: function (l, w) { return l + "连成了三角形，" + w + "获胜！"; },
+      youLose: "你连成了三角形，AI 获胜。", aiLose: "AI 连成了三角形，你赢了！",
+      board: "Sim 棋盘：六个点由十五条线相连",
+      line: function (a, b) { return "连接点 " + a + " 和点 " + b + " 的线"; },
+      owned: function (p) { return "，" + p; }, latest: "，最新一步",
+      switchTo: "English", switchLang: "en"
+    }
+  };
+  var lang = "en";
+  try {
+    var savedLang = localStorage.getItem("sim-lang");
+    if (savedLang === "en" || savedLang === "zh") lang = savedLang;
+    else if (/^zh/i.test(navigator.language || "")) lang = "zh";
+  } catch (e) { if (/^zh/i.test(navigator.language || "")) lang = "zh"; }
+  function t() { return T[lang]; }
 
   var S = {
     owner: {}, hist: [], turn: "R", over: false, losing: null,
@@ -452,17 +501,17 @@
   // ---------- rendering ----------
   var statusEl = document.getElementById("status");
   var undoBtn = document.getElementById("undoBtn");
-  function name(p) { return p === "R" ? "Red" : "Blue"; }
+  function name(p) { return p === "R" ? t().red : t().blue; }
 
   function statusText() {
     if (S.over) {
       var loser = S.owner[S.losing[0]];
-      if (S.mode === "2P") return name(loser) + " made a triangle. " + name(other(loser)) + " wins!";
-      return loser === "R" ? "You made a triangle. The AI wins." : "The AI made a triangle. You win!";
+      if (S.mode === "2P") return t().twoLose(name(loser), name(other(loser)));
+      return loser === "R" ? t().youLose : t().aiLose;
     }
-    if (S.mode === "2P") return name(S.turn) + "’s turn";
-    if (S.turn === "R") return "Your turn (Red)";
-    return "AI is thinking…";
+    if (S.mode === "2P") return t().turn(name(S.turn));
+    if (S.turn === "R") return t().yourTurn;
+    return t().thinking;
   }
 
   function render() {
@@ -479,8 +528,8 @@
       glowEls[k].style.display = (k === last) ? "" : "none";
       hitEls[k].setAttribute("class", o ? "hit taken" : "hit");
       hitEls[k].setAttribute("aria-disabled", o || S.over ? "true" : "false");
-      var lbl = "Line from dot " + (e[0] + 1) + " to dot " + (e[1] + 1);
-      if (o) lbl += ", " + name(o) + (k === last ? ", latest move" : "");
+      var lbl = t().line(e[0] + 1, e[1] + 1);
+      if (o) lbl += t().owned(name(o)) + (k === last ? t().latest : "");
       hitEls[k].setAttribute("aria-label", lbl);
     });
 
@@ -492,8 +541,8 @@
       b.setAttribute("aria-pressed", b.dataset.mode === S.mode ? "true" : "false");
     });
     var fb = document.querySelectorAll("#firstSeg button");
-    fb[0].textContent = S.mode === "2P" ? "Red" : "You";
-    fb[1].textContent = S.mode === "2P" ? "Blue" : "AI";
+    fb[0].textContent = S.mode === "2P" ? t().red : t().you;
+    fb[1].textContent = S.mode === "2P" ? t().blue : t().ai;
     fb.forEach(function (b) {
       b.setAttribute("aria-pressed", b.dataset.first === S.first ? "true" : "false");
     });
@@ -501,6 +550,25 @@
     var canUndo = S.hist.length > 0 && !(S.mode !== "2P" && S.first === "B" && S.hist.length <= 1);
     undoBtn.disabled = !canUndo;
   }
+
+  // ---------- language ----------
+  var langBtn = document.getElementById("langBtn");
+  function applyLang() {
+    var d = t();
+    document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+    document.title = d.title;
+    document.querySelectorAll("[data-i18n]").forEach(function (el) { el.textContent = d[el.dataset.i18n]; });
+    document.querySelectorAll("[data-i18n-html]").forEach(function (el) { el.innerHTML = d[el.dataset.i18nHtml]; });
+    svg.setAttribute("aria-label", d.board);
+    langBtn.textContent = d.switchTo;
+    langBtn.setAttribute("lang", d.switchLang === "zh" ? "zh-CN" : "en");
+    render();
+  }
+  langBtn.addEventListener("click", function () {
+    lang = lang === "en" ? "zh" : "en";
+    try { localStorage.setItem("sim-lang", lang); } catch (e) {}
+    applyLang();
+  });
 
   // ---------- controls ----------
   document.getElementById("modeSeg").addEventListener("click", function (ev) {
@@ -517,6 +585,7 @@
   undoBtn.addEventListener("click", undo);
 
   newGame();
+  applyLang();
 })();
 </script>
 </body>
